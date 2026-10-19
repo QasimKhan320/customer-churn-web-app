@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10243a">
+    <title>Customer Churn Prediction | ChurnInsight</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <a class="brand" href="/" aria-label="ChurnInsight home">
+                <span class="brand-mark" aria-hidden="true">CI</span>
+                <span>Churn<span class="brand-accent">Insight</span></span>
+            </a>
+            <span class="header-label">Customer intelligence <span aria-hidden="true">/</span> Prediction workspace</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero" aria-labelledby="page-title">
+            <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> CUSTOMER ANALYTICS</p>
+            <h1 id="page-title">Customer churn prediction</h1>
+            <p class="hero-description">
+                Explore a customer's service and account profile to estimate
+                their likelihood of leaving.
+            </p>
+        </section>
+
+        {% if error %}
+            <div class="notice error-notice" role="alert" aria-live="assertive">
+                <span class="notice-icon" aria-hidden="true">!</span>
+                <div>
+                    <strong>We couldn't complete the prediction</strong>
+                    <p>{{ error }}</p>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if result %}
+            <section class="prediction-result {% if result.prediction == 'Likely to Churn' %}result-churn{% else %}result-retained{% endif %}"
+                     aria-labelledby="result-title" aria-live="polite">
+                <div class="result-summary">
+                    <p class="result-kicker">MODEL ASSESSMENT</p>
+                    <h2 id="result-title">{{ result.prediction }}</h2>
+                    <p class="result-description">
+                        {% if result.prediction == 'Likely to Churn' %}
+                            This profile is flagged as at risk of leaving.
+                        {% else %}
+                            This profile is not flagged as at risk of leaving.
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="probability-panel">
+                    <div class="probability-heading">
+                        <span>Estimated churn probability</span>
+                        <strong>{{ result.probability }}%</strong>
+                    </div>
+                    <div class="probability-track"
+                         role="progressbar"
+                         aria-label="Estimated churn probability"
+                         aria-valuemin="0"
+                         aria-valuemax="100"
+                         aria-valuenow="{{ result.probability }}">
+                        <span class="probability-fill" style="width: {{ result.probability }}%"></span>
+                    </div>
+                    <p class="probability-note">
+                        Probability is a model estimate, not model accuracy or a guarantee.
+                    </p>
+                </div>
+                <p class="model-caption">Model: {{ result.model_name }}</p>
+            </section>
+        {% endif %}
+
+        <form method="POST" action="/" class="customer-form">
+            <div class="form-intro">
+                <div>
+                    <p class="form-kicker">CUSTOMER PROFILE</p>
+                    <h2>Enter customer details</h2>
+                </div>
+                <p class="required-note"><span aria-hidden="true">*</span> Required fields</p>
+            </div>
+
+            <section class="form-section" aria-labelledby="profile-heading">
+                <div class="section-heading">
+                    <span class="section-number" aria-hidden="true">01</span>
+                    <div>
+                        <h3 id="profile-heading">Customer profile</h3>
+                        <p class="section-description">Demographic and household information.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="gender">Gender <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="gender" name="gender" required>
+                            <option value="">Select gender</option>
+                            <option value="Female" {% if request.form.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+                            <option value="Male" {% if request.form.get('gender') == 'Male' %}selected{% endif %}>Male</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="SeniorCitizen">Senior citizen <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="SeniorCitizen" name="SeniorCitizen" required>
+                            <option value="">Select an option</option>
+                            <option value="0" {% if request.form.get('SeniorCitizen') == '0' %}selected{% endif %}>No</option>
+                            <option value="1" {% if request.form.get('SeniorCitizen') == '1' %}selected{% endif %}>Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="Partner">Partner <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="Partner" name="Partner" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('Partner') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('Partner') == 'No' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="Dependents">Dependents <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="Dependents" name="Dependents" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('Dependents') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('Dependents') == 'No' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="tenure">Tenure (months) <span class="required-mark" aria-hidden="true">*</span></label>
+                        <input type="number" id="tenure" name="tenure"
+                               min="0" max="72" step="1" inputmode="numeric"
+                               value="{{ request.form.get('tenure', '') }}" required>
+                        <span class="field-help">Enter a value from 0 to 72 months.</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="services-heading">
+                <div class="section-heading">
+                    <span class="section-number" aria-hidden="true">02</span>
+                    <div>
+                        <h3 id="services-heading">Phone and internet services</h3>
+                        <p class="section-description">Current connectivity and service add-ons.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="PhoneService">Phone service <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="PhoneService" name="PhoneService" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('PhoneService') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('PhoneService') == 'No' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="MultipleLines">Multiple lines <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="MultipleLines" name="MultipleLines" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('MultipleLines') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('MultipleLines') == 'No' %}selected{% endif %}>No</option>
+                            <option value="No phone service" {% if request.form.get('MultipleLines') == 'No phone service' %}selected{% endif %}>No phone service</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="InternetService">Internet service <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="InternetService" name="InternetService" required>
+                            <option value="">Select internet service</option>
+                            <option value="DSL" {% if request.form.get('InternetService') == 'DSL' %}selected{% endif %}>DSL</option>
+                            <option value="Fiber optic" {% if request.form.get('InternetService') == 'Fiber optic' %}selected{% endif %}>Fiber optic</option>
+                            <option value="No" {% if request.form.get('InternetService') == 'No' %}selected{% endif %}>No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="OnlineSecurity">Online security <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="OnlineSecurity" name="OnlineSecurity" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('OnlineSecurity') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('OnlineSecurity') == 'No' %}selected{% endif %}>No</option>
+                            <option value="No internet service" {% if request.form.get('OnlineSecurity') == 'No internet service' %}selected{% endif %}>No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="OnlineBackup">Online backup <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="OnlineBackup" name="OnlineBackup" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('OnlineBackup') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('OnlineBackup') == 'No' %}selected{% endif %}>No</option>
+                            <option value="No internet service" {% if request.form.get('OnlineBackup') == 'No internet service' %}selected{% endif %}>No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="DeviceProtection">Device protection <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="DeviceProtection" name="DeviceProtection" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('DeviceProtection') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('DeviceProtection') == 'No' %}selected{% endif %}>No</option>
+                            <option value="No internet service" {% if request.form.get('DeviceProtection') == 'No internet service' %}selected{% endif %}>No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="TechSupport">Tech support <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="TechSupport" name="TechSupport" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('TechSupport') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('TechSupport') == 'No' %}selected{% endif %}>No</option>
+                            <option value="No internet service" {% if request.form.get('TechSupport') == 'No internet service' %}selected{% endif %}>No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="StreamingTV">Streaming TV <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="StreamingTV" name="StreamingTV" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('StreamingTV') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('StreamingTV') == 'No' %}selected{% endif %}>No</option>
+                            <option value="No internet service" {% if request.form.get('StreamingTV') == 'No internet service' %}selected{% endif %}>No internet service</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="StreamingMovies">Streaming movies <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="StreamingMovies" name="StreamingMovies" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('StreamingMovies') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('StreamingMovies') == 'No' %}selected{% endif %}>No</option>
+                            <option value="No internet service" {% if request.form.get('StreamingMovies') == 'No internet service' %}selected{% endif %}>No internet service</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="billing-heading">
+                <div class="section-heading">
+                    <span class="section-number" aria-hidden="true">03</span>
+                    <div>
+                        <h3 id="billing-heading">Contract and billing</h3>
+                        <p class="section-description">Agreement, payment preferences, and charges.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="Contract">Contract <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="Contract" name="Contract" required>
+                            <option value="">Select contract</option>
+                            <option value="Month-to-month" {% if request.form.get('Contract') == 'Month-to-month' %}selected{% endif %}>Month-to-month</option>
+                            <option value="One year" {% if request.form.get('Contract') == 'One year' %}selected{% endif %}>One year</option>
+                            <option value="Two year" {% if request.form.get('Contract') == 'Two year' %}selected{% endif %}>Two year</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="PaperlessBilling">Paperless billing <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="PaperlessBilling" name="PaperlessBilling" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes" {% if request.form.get('PaperlessBilling') == 'Yes' %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if request.form.get('PaperlessBilling') == 'No' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="PaymentMethod">Payment method <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="PaymentMethod" name="PaymentMethod" required>
+                            <option value="">Select payment method</option>
+                            <option value="Electronic check" {% if request.form.get('PaymentMethod') == 'Electronic check' %}selected{% endif %}>Electronic check</option>
+                            <option value="Mailed check" {% if request.form.get('PaymentMethod') == 'Mailed check' %}selected{% endif %}>Mailed check</option>
+                            <option value="Bank transfer (automatic)" {% if request.form.get('PaymentMethod') == 'Bank transfer (automatic)' %}selected{% endif %}>Bank transfer (automatic)</option>
+                            <option value="Credit card (automatic)" {% if request.form.get('PaymentMethod') == 'Credit card (automatic)' %}selected{% endif %}>Credit card (automatic)</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="MonthlyCharges">Monthly charges <span class="required-mark" aria-hidden="true">*</span></label>
+                        <input type="number" id="MonthlyCharges" name="MonthlyCharges"
+                               min="0" step="0.01" inputmode="decimal"
+                               value="{{ request.form.get('MonthlyCharges', '') }}" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="TotalCharges">Total charges <span class="required-mark" aria-hidden="true">*</span></label>
+                        <input type="number" id="TotalCharges" name="TotalCharges"
+                               min="0" step="0.01" inputmode="decimal"
+                               value="{{ request.form.get('TotalCharges', '') }}" required>
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <a class="button button-secondary" href="{{ url_for('home') }}">Clear form</a>
+                <button type="submit" class="button button-primary">
+                    Predict churn <span aria-hidden="true">&rarr;</span>
+                </button>
+            </div>
+        </form>
+
+        <p class="disclaimer">
+            Predictions are estimates for educational purposes and should not
+            be treated as a guarantee of future customer behaviour.
+        </p>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <span>ChurnInsight</span>
+            <span>Customer churn prediction · AI assignment</span>
+        </div>
+    </footer>
+</body>
+</html>
